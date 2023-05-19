@@ -1,0 +1,59 @@
+trigger:
+  - master
+
+stages:
+  - stage: BuildAndSonarQube
+    displayName: 'Build and SonarQube Stage'
+    jobs:
+      - job: BuildAndSonarQubeJob
+        pool:
+          name: MyPC
+        steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '10.x'
+            displayName: 'Install Node.js'
+            
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: 'SonarQube'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: 'Proyecto_DevOps_BHD_Boom_AYgqhrdBTatcFDhFzmly'
+              cliSources: '.'
+
+          - script: |
+              npm install
+              npm run build
+              npm test
+            displayName: 'npm install, build, and test'
+
+          - script: |
+              npm install -g sonarqube-scanner
+              sonar-scanner
+            displayName: 'SonarQube analysis'
+          
+          - task: SonarQubeAnalyze@5
+            name: sonarqubeAnalysis
+            displayName: 'Run SonarQube Analysis'
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'
+            
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Pipeline Artifact'
+            inputs:
+              artifact: 'Download_Artifact'
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Pipeline Artifact'
+            inputs:
+              artifactName: 'Download_Artifact'
+              targetPath: 'C:\Users\arism\OneDrive\Desktop\Artefactos'
+
+
+
+  # Otros stages según sea necesario
